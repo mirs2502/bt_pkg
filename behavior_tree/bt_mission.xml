@@ -1,0 +1,22 @@
+<root main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        <Sequence name="MainSequence">
+            <!-- Phase 1: Setup & Perception -->
+            <Sequence name="SetupSequence">
+                <Wait wait_duration="2"/> <!-- Wait for sensors to stabilize -->
+                <Spin spin_dist="6.28"/> <!-- Spin 360 degrees to scan cones -->
+                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+            </Sequence>
+            
+            <!-- Phase 2: Path Planning -->
+            <Sequence name="PlanSequence">
+                <GenerateCoveragePath node="{node}" area_polygon="{area_polygon}" coverage_path="{waypoints}"/>
+            </Sequence>
+            
+            <!-- Phase 3: Execution & Recovery -->
+            <Fallback name="ExecuteFallback">
+                <FollowPath path="{waypoints}" controller_id="FollowPath"/>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

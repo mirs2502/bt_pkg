@@ -11,7 +11,7 @@ using namespace BT;
 class Wait : public SyncActionNode {
 public:
     Wait(const std::string& name, const NodeConfiguration& config) : SyncActionNode(name, config) {}
-    static PortsList providedPorts() { return { InputPort<double>("duration") }; }
+    static PortsList providedPorts() { return { InputPort<double>("wait_duration") }; }
     NodeStatus tick() override {
         std::cout << "[Nav2 Mock] Waiting..." << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));

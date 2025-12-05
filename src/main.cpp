@@ -12,12 +12,12 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-//#include "bt_actions/nav2_mock_nodes.hpp" // モック
+#include "bt_actions/nav2_mock_nodes.hpp" // モック
 
 
 // XMLファイルのパスを定数で定義（実際はパラメータやLaunchで渡すと良い）
 // 重要: フルパスで指定するか、shareディレクトリから探すロジックが必要
-const std::string BT_XML = "/home/sawara/mirs_ws/src/bt_pkg/behavior_tree/matsumoto_mission.xml";
+const std::string BT_XML = "/home/sawara/mirs_ws/src/bt_pkg/behavior_tree/bt_mission.xml";
 
 int main(int argc, char **argv)
 {
@@ -36,11 +36,12 @@ int main(int argc, char **argv)
     factory.registerNodeType<GenerateCoveragePath>("GenerateCoveragePath");
     factory.registerNodeType<LocalizeWithCones>("LocalizeWithCones");
 
-    // Nav2モックノードの登録
+    // Nav2モックノードの登録 (テスト用)
     //factory.registerNodeType<Wait>("Wait");
     //factory.registerNodeType<Spin>("Spin");
     //factory.registerNodeType<NavigateThroughPoses>("NavigateThroughPoses");
 
+    
     const std::string plugin_dir = "/opt/ros/humble/lib"; // ROS2の標準ライブラリパス
     namespace fs = std::filesystem;
 
@@ -57,6 +58,7 @@ int main(int argc, char **argv)
     } catch (const std::exception &e) {
         RCLCPP_ERROR(ros_node->get_logger(), "Failed to load plugins: %s", e.what());
     }
+    
 
     factory.registerNodeType<HelloRos>("HelloRos");
     factory.registerNodeType<PublishTest>("PublishTest");
@@ -64,6 +66,9 @@ int main(int argc, char **argv)
     // 3. Blackboardの設定とROSノードの登録
     auto blackboard = BT::Blackboard::create();
     blackboard->set("node", ros_node); // これで全ノードがROS機能を使えるようになる
+    blackboard->set<std::chrono::milliseconds>("bt_loop_duration", std::chrono::milliseconds(10)); // Nav2ノード用
+    blackboard->set<std::chrono::milliseconds>("server_timeout", std::chrono::milliseconds(1000)); // Nav2ノード用
+    blackboard->set<std::chrono::milliseconds>("wait_for_service_timeout", std::chrono::milliseconds(1000)); // Nav2ノード用
 
     // 4. ツリーの構築
     try {

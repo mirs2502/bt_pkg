@@ -10,7 +10,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED) 
+find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(nav2_behavior_tree REQUIRED) 
 
 # 自分のパッケージ内のヘッダー置き場を指定
 include_directories(
@@ -30,6 +33,9 @@ ament_target_dependencies(bt_executor
   behaviortree_cpp_v3
   geometry_msgs
   std_msgs
+  nav_msgs
+  nav2_msgs
+  nav2_behavior_tree
 )
 
 # インストール設定（実行ファイル）
@@ -37,7 +43,10 @@ install(TARGETS bt_executor
   DESTINATION lib/${PROJECT_NAME})
 
 # インストール設定（ディレクトリ）
-install(DIRECTORY behavior_tree launch
+install(DIRECTORY
+  behavior_tree
+  launch
+  worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
