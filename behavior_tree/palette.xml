@@ -1,0 +1,9 @@
+<root>
+    <TreeNodesModel>
+        <Action ID="HelloRos">
+            <input_port name="node"/>
+            <input_port name="message"/>
+        </Action>
+        
+        </TreeNodesModel>
+</root>
