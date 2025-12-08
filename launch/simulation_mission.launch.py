@@ -24,7 +24,8 @@ def generate_launch_description():
             'world': world_file,
             'x_pose': '0.0',
             'y_pose': '0.0',
-            'z_pose': '0.01'
+            'z_pose': '0.01',
+            'map': os.path.join(bt_pkg_dir, 'maps', 'cone_map.yaml')
         }.items()
     )
 
@@ -32,15 +33,18 @@ def generate_launch_description():
     
     # 1. Scan to PointCloud
     scan_to_pcl_node = Node(
-        package='cone_detector_package',
+        package='cone_detector',
         executable='scan_to_pointcloud',
         name='scan_to_pointcloud',
-        output='screen'
+        output='screen',
+        remappings=[
+            ('/scan_filtered', '/scan')
+        ]
     )
 
     # 2. Cone Clustering
     cone_cluster_node = Node(
-        package='cone_detector_package',
+        package='cone_detector',
         executable='cone_cluster_node',
         name='cone_cluster_node',
         output='screen'
@@ -49,7 +53,7 @@ def generate_launch_description():
     # 3. Cone Area (Polygon Generation)
     # Remap /confirmed_cones to /cone_centers to bypass fusion node (since we don't have camera in sim yet)
     cone_area_node = Node(
-        package='cone_detector_package',
+        package='cone_detector',
         executable='cone_area_node',
         name='cone_area_node',
         output='screen',

@@ -21,7 +21,8 @@ public:
         return {
             InputPort<rclcpp::Node::SharedPtr>("node"),
             InputPort<std::vector<geometry_msgs::msg::Point>>("area_polygon"),
-            OutputPort<nav_msgs::msg::Path>("coverage_path")
+            OutputPort<nav_msgs::msg::Path>("coverage_path"),
+            OutputPort<geometry_msgs::msg::PoseStamped>("start_pose") // Added
         };
     }
 
@@ -99,6 +100,10 @@ public:
 
         RCLCPP_INFO(node->get_logger(), "Generated path with %zu waypoints.", path_msg.poses.size());
         setOutput("coverage_path", path_msg);
+
+        if (!path_msg.poses.empty()) {
+            setOutput("start_pose", path_msg.poses[0]);
+        }
 
         return NodeStatus::SUCCESS;
     }

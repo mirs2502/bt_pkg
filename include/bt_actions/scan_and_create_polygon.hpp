@@ -34,6 +34,7 @@ public:
         sub_ = node_->create_subscription<geometry_msgs::msg::PolygonStamped>(
             "/cone_area", 10,
             [this](const geometry_msgs::msg::PolygonStamped::SharedPtr msg) {
+                RCLCPP_INFO(node_->get_logger(), "ScanAndCreatePolygon: Callback executed!");
                 last_polygon_ = msg;
             });
 
