@@ -1,35 +1,13 @@
 <root main_tree_to_execute="MainTree">
     <TreeNodesModel>
-        <Action ID="ScanAndCreatePolygon">
-            <input_port name="node"/>
-            <output_port name="area_polygon"/>
-        </Action>
-        <Action ID="GenerateCoveragePath">
-            <input_port name="node"/>
-            <input_port name="area_polygon"/>
-            <output_port name="coverage_path"/>
-            <output_port name="start_pose"/>
-        </Action>
-        <Action ID="ControlMotor">
-            <input_port name="node"/>
-            <input_port name="pwm_value"/>
-        </Action>
-        <Action ID="LocalizeWithCones">
-            <input_port name="node"/>
-        </Action>
-        
-        <Action ID="Wait">
-            <input_port name="wait_duration"/>
-        </Action>
-        <Action ID="Spin">
-            <input_port name="spin_dist"/>
-        </Action>
-        <Action ID="NavigateThroughPoses">
-            <input_port name="goals"/>
-        </Action>
-        <Action ID="NavigateToPose">
-            <input_port name="goal"/>
-        </Action>
+        <Action ID="ScanAndCreatePolygon"> <input_port name="node"/> <output_port name="area_polygon"/> </Action>
+        <Action ID="GenerateCoveragePath"> <input_port name="node"/> <input_port name="area_polygon"/> <output_port name="coverage_path"/> <output_port name="start_pose"/> </Action>
+        <Action ID="ControlMotor"> <input_port name="node"/> <input_port name="pwm_value"/> </Action>
+        <Action ID="LocalizeWithCones"> <input_port name="node"/> </Action>
+        <Action ID="Wait"> <input_port name="wait_duration"/> </Action>
+        <Action ID="Spin"> <input_port name="spin_dist"/> </Action>
+        <Action ID="NavigateThroughPoses"> <input_port name="goals"/> </Action>
+        <Action ID="NavigateToPose"> <input_port name="goal"/> </Action>
     </TreeNodesModel>
 
     <BehaviorTree ID="MainTree">
@@ -38,15 +16,15 @@
             <KeepRunningUntilFailure>
                 <Inverter>
                     <Sequence name="SetupSequence">
-                        <Fallback name="ScanRecovery">
-                            <Sequence>
-                                <Wait wait_duration="1.0"/>
-                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-                            </Sequence>
-                            <Sequence>
-                                <Spin spin_dist="1.57"/>
-                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-                            </Sequence>
+                        
+                        <Sequence name="GatherInformation">
+                            <Wait wait_duration="1.0"/>
+                            <Spin spin_dist="6.28"/>
+                            <Wait wait_duration="0.5"/> </Sequence>
+
+                        <Fallback name="ScanFallback">
+                            <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+                            <Wait wait_duration="1.0"/> 
                         </Fallback>
                         
                         <GenerateCoveragePath node="{node}" 
@@ -58,7 +36,6 @@
             </KeepRunningUntilFailure>
 
             <Sequence name="ExecutionSequence">
-                
                 <Fallback name="MoveToStartFallback">
                     <NavigateToPose goal="{start_pose}"/>
                     <Sequence name="RetryStart">
@@ -72,14 +49,11 @@
                 
                 <Fallback name="CoverageFallback">
                     <NavigateThroughPoses goals="{coverage_path}"/>
-                    
                     <Sequence name="RecoveryRoutine">
                         <ControlMotor node="{node}" pwm_value="0"/>
-                        
                         <Wait wait_duration="2.0"/>
                         <Spin spin_dist="3.14"/>
                         <LocalizeWithCones node="{node}"/>
-                        
                         <ControlMotor node="{node}" pwm_value="100"/>
                         <NavigateThroughPoses goals="{coverage_path}"/>
                     </Sequence>
