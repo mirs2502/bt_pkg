@@ -18,16 +18,25 @@
 
 // XMLファイルのパスを定数で定義（実際はパラメータやLaunchで渡すと良い）
 // 重要: フルパスで指定するか、shareディレクトリから探すロジックが必要
-const std::string BT_XML = "/home/sawara/mirs_ws/src/bt_pkg/behavior_tree/bt_mission.xml";
 
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    std::cout << "DEBUG: Loading XML from: " << BT_XML << std::endl;
-
     // 1. 共有ROSノードの作成
     auto ros_node = rclcpp::Node::make_shared("bt_executor_node");
+
+    // パラメータの宣言と取得
+    ros_node->declare_parameter<std::string>("bt_xml_path", "");
+    std::string bt_xml_path;
+    ros_node->get_parameter("bt_xml_path", bt_xml_path);
+
+    if (bt_xml_path.empty()) {
+        RCLCPP_ERROR(ros_node->get_logger(), "Parameter 'bt_xml_path' is not set!");
+        return 1;
+    }
+
+    std::cout << "DEBUG: Loading XML from: " << bt_xml_path << std::endl;
 
     // 2. Factoryの作成
     BT::BehaviorTreeFactory factory;
@@ -74,7 +83,7 @@ int main(int argc, char **argv)
 
     // 4. ツリーの構築
     try {
-        auto tree = factory.createTreeFromFile(BT_XML, blackboard);
+        auto tree = factory.createTreeFromFile(bt_xml_path, blackboard);
 
         // Grootで可視化するためのパブリッシャー
         BT::PublisherZMQ publisher_zmq(tree);

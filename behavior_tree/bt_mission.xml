@@ -1,6 +1,5 @@
 <root main_tree_to_execute="MainTree">
     <TreeNodesModel>
-        <!-- Custom Nodes -->
         <Action ID="ScanAndCreatePolygon">
             <input_port name="node"/>
             <output_port name="area_polygon"/>
@@ -19,15 +18,14 @@
             <input_port name="node"/>
         </Action>
         
-        <!-- Nav2 Standard Nodes (for Groot) -->
         <Action ID="Wait">
-            <input_port name="duration"/>
+            <input_port name="wait_duration"/>
         </Action>
         <Action ID="Spin">
             <input_port name="spin_dist"/>
         </Action>
         <Action ID="NavigateThroughPoses">
-            <input_port name="path"/>
+            <input_port name="goals"/>
         </Action>
         <Action ID="NavigateToPose">
             <input_port name="goal"/>
@@ -35,39 +33,61 @@
     </TreeNodesModel>
 
     <BehaviorTree ID="MainTree">
-        <Sequence name="MainSequence">
-            <!-- Phase 1: Setup (Environment Recognition & Map Creation) -->
-            <Sequence name="SetupSeq">
-                <Wait duration="1.0" name="Wait_SensorStable"/>
-                <Spin spin_dist="6.28" name="Spin_Scan"/>
-                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-            </Sequence>
+        <Sequence name="FullMission">
+            
+            <KeepRunningUntilFailure>
+                <Inverter>
+                    <Sequence name="SetupSequence">
+                        <Fallback name="ScanRecovery">
+                            <Sequence>
+                                <Wait wait_duration="1.0"/>
+                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+                            </Sequence>
+                            <Sequence>
+                                <Spin spin_dist="1.57"/>
+                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+                            </Sequence>
+                        </Fallback>
+                        
+                        <GenerateCoveragePath node="{node}" 
+                                              area_polygon="{area_polygon}" 
+                                              coverage_path="{coverage_path}"
+                                              start_pose="{start_pose}"/>
+                    </Sequence>
+                </Inverter>
+            </KeepRunningUntilFailure>
 
-            <!-- Phase 2: Path Planning -->
-            <Sequence name="PlanSeq">
-                <GenerateCoveragePath node="{node}" 
-                                      area_polygon="{area_polygon}" 
-                                      coverage_path="{coverage_path}"
-                                      start_pose="{start_pose}"/>
-            </Sequence>
-
-            <!-- Phase 3: Execution & Recovery -->
-            <Fallback name="ExecFallback">
-                <!-- 3-1: Normal Execution -->
-                <Sequence name="NavSeq">
+            <Sequence name="ExecutionSequence">
+                
+                <Fallback name="MoveToStartFallback">
                     <NavigateToPose goal="{start_pose}"/>
-                    <ControlMotor node="{node}" pwm_value="100"/>
-                    <NavigateThroughPoses path="{coverage_path}"/>
-                    <ControlMotor node="{node}" pwm_value="0"/>
-                </Sequence>
+                    <Sequence name="RetryStart">
+                        <Wait wait_duration="1.0"/>
+                        <LocalizeWithCones node="{node}"/>
+                        <NavigateToPose goal="{start_pose}"/>
+                    </Sequence>
+                </Fallback>
 
-                <!-- 3-2: Recovery -->
-                <Sequence name="RecSeq">
-                    <Wait duration="2.0" name="Stop_Wait"/>
-                    <LocalizeWithCones node="{node}"/>
-                    <NavigateThroughPoses path="{coverage_path}" name="RetryNav"/>
-                </Sequence>
-            </Fallback>
+                <ControlMotor node="{node}" pwm_value="100"/>
+                
+                <Fallback name="CoverageFallback">
+                    <NavigateThroughPoses goals="{coverage_path}"/>
+                    
+                    <Sequence name="RecoveryRoutine">
+                        <ControlMotor node="{node}" pwm_value="0"/>
+                        
+                        <Wait wait_duration="2.0"/>
+                        <Spin spin_dist="3.14"/>
+                        <LocalizeWithCones node="{node}"/>
+                        
+                        <ControlMotor node="{node}" pwm_value="100"/>
+                        <NavigateThroughPoses goals="{coverage_path}"/>
+                    </Sequence>
+                </Fallback>
+
+                <ControlMotor node="{node}" pwm_value="0"/>
+            </Sequence>
+
         </Sequence>
     </BehaviorTree>
 </root>
