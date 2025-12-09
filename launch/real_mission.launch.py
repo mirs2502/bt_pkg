@@ -86,6 +86,14 @@ def generate_launch_description():
         }]
     )
 
+    # Coverage Planner Node (Zigzag Generator)
+    zigzag_node = Node(
+        package='coverage_planner',
+        executable='zigzag_generator',
+        name='zigzag_generator',
+        output='screen'
+    )
+
     return LaunchDescription([
         bt_xml_arg,
         scan_to_pcl_node,
@@ -93,5 +101,6 @@ def generate_launch_description():
         cone_color_detector_node,
         cone_fusion_node,
         cone_area_node,
+        zigzag_node,
         bt_node
     ])
