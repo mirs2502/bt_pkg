@@ -13,9 +13,14 @@ public:
     Wait(const std::string& name, const NodeConfiguration& config) : SyncActionNode(name, config) {}
     static PortsList providedPorts() { return { InputPort<double>("wait_duration") }; }
     NodeStatus tick() override {
-        std::cout << "[Nav2 Mock] Waiting..." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        return NodeStatus::SUCCESS;
+        double duration = 1.0;
+        if (getInput("wait_duration", duration)) {
+            std::cout << "[Wait Node] Waiting for " << duration << " seconds..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(duration * 1000)));
+            return NodeStatus::SUCCESS;
+        } else {
+             throw RuntimeError("Missing parameter [wait_duration]");
+        }
     }
 };
 

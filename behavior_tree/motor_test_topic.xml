@@ -1,0 +1,22 @@
+<root main_tree_to_execute="MotorTestTree">
+    <TreeNodesModel>
+        <Action ID="DriveRobot"> 
+            <input_port name="node"/> 
+            <input_port name="linear_x"/> 
+            <input_port name="angular_z"/> 
+            <input_port name="duration"/> 
+        </Action>
+    </TreeNodesModel>
+
+    <BehaviorTree ID="MotorTestTree">
+        <Repeat num_cycles="10">
+            <Sequence name="MotorTestSequence">
+                <!-- Drive Forward -->
+                <DriveRobot node="{node}" linear_x="0.2" angular_z="0.0" duration="3.0"/>
+                
+                <!-- Stop -->
+                <DriveRobot node="{node}" linear_x="0.0" angular_z="0.0" duration="3.0"/>
+            </Sequence>
+        </Repeat>
+    </BehaviorTree>
+</root>

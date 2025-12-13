@@ -9,6 +9,7 @@
 #include "bt_actions/generate_coverage_path.hpp"
 #include "bt_actions/localize_with_cones.hpp"
 #include "bt_actions/control_motor.hpp" // Added
+#include "bt_actions/drive_robot.hpp" // Added
 //Nav2関連
 #include <filesystem>
 #include <string>
@@ -46,9 +47,10 @@ int main(int argc, char **argv)
     factory.registerNodeType<GenerateCoveragePath>("GenerateCoveragePath");
     factory.registerNodeType<LocalizeWithCones>("LocalizeWithCones");
     factory.registerNodeType<ControlMotor>("ControlMotor"); // Added
+    factory.registerNodeType<DriveRobot>("DriveRobot"); // Added
 
     // Nav2モックノードの登録 (テスト用)
-    //factory.registerNodeType<Wait>("Wait");
+    factory.registerNodeType<Wait>("Wait");
     //factory.registerNodeType<Spin>("Spin");
     //factory.registerNodeType<NavigateThroughPoses>("NavigateThroughPoses");
 

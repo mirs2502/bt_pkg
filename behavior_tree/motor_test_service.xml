@@ -1,0 +1,20 @@
+<root main_tree_to_execute="MotorTestServiceTree">
+    <TreeNodesModel>
+        <Action ID="ControlMotor"> <input_port name="node"/> <input_port name="pwm_value"/> </Action>
+        <Action ID="Wait"> <input_port name="wait_duration"/> </Action>
+    </TreeNodesModel>
+
+    <BehaviorTree ID="MotorTestServiceTree">
+        <Repeat num_cycles="10">
+            <Sequence name="MotorTestSequence">
+                <!-- Run Motor (PWM 100) -->
+                <ControlMotor node="{node}" pwm_value="100"/>
+                <Wait wait_duration="3.0"/>
+                
+                <!-- Stop Motor (PWM 0) -->
+                <ControlMotor node="{node}" pwm_value="0"/>
+                <Wait wait_duration="3.0"/>
+            </Sequence>
+        </Repeat>
+    </BehaviorTree>
+</root>
