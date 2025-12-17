@@ -22,10 +22,15 @@
                             <Spin spin_dist="6.28"/>
                             <Wait wait_duration="0.5"/> </Sequence>
 
-                        <Fallback name="ScanFallback">
-                            <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-                            <Wait wait_duration="1.0"/> 
-                        </Fallback>
+                        <RetryUntilSuccessful num_attempts="3">
+                            <Fallback name="ScanFallback">
+                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+                                <Sequence>
+                                    <Wait wait_duration="1.0"/>
+                                    <AlwaysFailure/>
+                                </Sequence>
+                            </Fallback>
+                        </RetryUntilSuccessful>
                         
                         <GenerateCoveragePath node="{node}" 
                                               area_polygon="{area_polygon}" 

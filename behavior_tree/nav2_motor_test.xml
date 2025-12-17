@@ -1,0 +1,20 @@
+<root main_tree_to_execute="Nav2MotorTestTree">
+    <BehaviorTree ID="Nav2MotorTestTree">
+        <Sequence name="MotorTestSequence">
+            <!-- Initial Safety Wait -->
+            <Wait wait_duration="2.0"/>
+            
+            <!-- Spin 90 degrees (1.57 rad) -->
+            <Spin spin_dist="1.57" time_allowance="10.0"/>
+            
+            <!-- Wait to observe -->
+            <Wait wait_duration="2.0"/>
+            
+            <!-- Spin back -90 degrees (-1.57 rad) -->
+            <Spin spin_dist="-1.57" time_allowance="10.0"/>
+            
+            <!-- Final Wait -->
+            <Wait wait_duration="2.0"/>
+        </Sequence>
+    </BehaviorTree>
+</root>
