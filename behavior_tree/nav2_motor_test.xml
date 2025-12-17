@@ -1,17 +1,29 @@
 <root main_tree_to_execute="Nav2MotorTestTree">
+    <TreeNodesModel>
+        <Action ID="Wait">
+            <input_port name="wait_duration"/>
+        </Action>
+        <Action ID="DriveRobot">
+            <input_port name="linear_x"/>
+            <input_port name="angular_z"/>
+            <input_port name="duration"/>
+            <input_port name="node"/>
+        </Action>
+    </TreeNodesModel>
     <BehaviorTree ID="Nav2MotorTestTree">
         <Sequence name="MotorTestSequence">
             <!-- Initial Safety Wait -->
             <Wait wait_duration="2.0"/>
             
-            <!-- Spin 90 degrees (1.57 rad) -->
-            <Spin spin_dist="1.57" time_allowance="10.0"/>
+            <!-- Spin 90 degrees (approx) using DriveRobot -->
+            <!-- angular_z = 0.5 rad/s, duration = 3.6 sec -> approx 1.8 rad -->
+            <DriveRobot node="{node}" linear_x="0.0" angular_z="0.5" duration="3.6"/>
             
             <!-- Wait to observe -->
             <Wait wait_duration="2.0"/>
             
-            <!-- Spin back -90 degrees (-1.57 rad) -->
-            <Spin spin_dist="-1.57" time_allowance="10.0"/>
+            <!-- Spin back -90 degrees (approx) -->
+            <DriveRobot node="{node}" linear_x="0.0" angular_z="-0.5" duration="3.6"/>
             
             <!-- Final Wait -->
             <Wait wait_duration="2.0"/>

@@ -63,6 +63,10 @@ int main(int argc, char **argv)
             std::string filename = entry.path().filename().string();
             // "_bt_node.so" で終わるファイル（Nav2のBTノード）を探す
             if (filename.find("_bt_node.so") != std::string::npos) {
+                // Waitノードは自作モックを使うので、Nav2のプラグインは除外する
+                if (filename.find("wait") != std::string::npos) {
+                    continue;
+                }
                 // 例: libnav2_wait_action_bt_node.so などが見つかる
                 factory.registerFromPlugin(entry.path().string());
                 // RCLCPP_INFO(ros_node->get_logger(), "Loaded plugin: %s", filename.c_str());
