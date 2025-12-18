@@ -92,7 +92,8 @@ int main(int argc, char **argv)
         auto tree = factory.createTreeFromFile(bt_xml_path, blackboard);
 
         // Grootで可視化するためのパブリッシャー
-        BT::PublisherZMQ publisher_zmq(tree);
+        // Nav2のbehavior_serverとポート(1666/1667)が競合するため、1668/1669に変更
+        BT::PublisherZMQ publisher_zmq(tree, 25, 1668, 1669);
 
         RCLCPP_INFO(ros_node->get_logger(), "Behavior Tree Started");
 

@@ -20,6 +20,12 @@ def generate_launch_description():
         description='Path to the Behavior Tree XML file'
     )
 
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulated clock if true'
+    )
+
     # Cone Detector Pipeline
     
     # 1. Scan to PointCloud
@@ -28,6 +34,7 @@ def generate_launch_description():
         executable='scan_to_pointcloud',
         name='scan_to_pointcloud',
         output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         remappings=[
             ('/scan_filtered', '/scan') # Assuming real robot publishes to /scan
         ]
@@ -38,7 +45,8 @@ def generate_launch_description():
         package='cone_detector',
         executable='cone_cluster_node',
         name='cone_cluster_node',
-        output='screen'
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
 
     # 3. Cone Color Detector (Real Robot only)
@@ -49,6 +57,7 @@ def generate_launch_description():
         executable='cone_color_detector_node',
         name='cone_color_detector_node',
         output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         remappings=[
             ('/image_raw', '/camera/color/image_raw'),
             ('/camera_info', '/camera/color/camera_info')
@@ -61,6 +70,7 @@ def generate_launch_description():
         executable='cone_fusion_node',
         name='cone_fusion_node',
         output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         remappings=[
             ('/camera_info', '/camera/color/camera_info')
         ]
@@ -71,7 +81,8 @@ def generate_launch_description():
         package='cone_detector',
         executable='cone_area_node',
         name='cone_area_node',
-        output='screen'
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
         # No remapping needed for /confirmed_cones as fusion node publishes to it
     )
 
@@ -82,7 +93,8 @@ def generate_launch_description():
         name='bt_main',
         output='screen',
         parameters=[{
-            'bt_xml_path': LaunchConfiguration('bt_xml_path')
+            'bt_xml_path': LaunchConfiguration('bt_xml_path'),
+            'use_sim_time': LaunchConfiguration('use_sim_time')
         }]
     )
 
@@ -91,11 +103,13 @@ def generate_launch_description():
         package='coverage_planner',
         executable='zigzag_generator',
         name='zigzag_generator',
-        output='screen'
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
 
     return LaunchDescription([
         bt_xml_arg,
+        use_sim_time_arg,
         scan_to_pcl_node,
         cone_cluster_node,
         cone_color_detector_node,
