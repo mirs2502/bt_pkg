@@ -1,8 +1,7 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -36,7 +35,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         remappings=[
-            ('/scan_filtered', '/scan') # Assuming real robot publishes to /scan
+            ('/scan_filtered', '/scan')
         ]
     )
 
@@ -49,9 +48,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
 
-    # 3. Cone Color Detector (Real Robot only)
-    # Assuming camera publishes to /camera/color/image_raw and /camera/color/camera_info
-    # Adjust remappings if necessary based on real hardware setup
+    # 3. Cone Color Detector
     cone_color_detector_node = Node(
         package='cone_detector',
         executable='cone_color_detector_node',
@@ -60,12 +57,11 @@ def generate_launch_description():
         parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
         remappings=[
             ('/image_raw', '/camera/color/image_raw'),
-            ('/camera_info', '/camera/color/camera_info'),
-            ('/color_mask', '/color_mask') # Explicitly remap if needed, though default is fine. Added for clarity.
+            ('/camera_info', '/camera/color/camera_info')
         ]
     )
 
-    # 4. Cone Fusion (Real Robot only)
+    # 4. Cone Fusion
     cone_fusion_node = Node(
         package='cone_detector',
         executable='cone_fusion_node',
@@ -77,26 +73,13 @@ def generate_launch_description():
         ]
     )
 
-    # 5. Cone Area (Polygon Generation)
+    # 5. Cone Area
     cone_area_node = Node(
         package='cone_detector',
         executable='cone_area_node',
         name='cone_area_node',
         output='screen',
         parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
-        # No remapping needed for /confirmed_cones as fusion node publishes to it
-    )
-
-    # Behavior Tree Node
-    bt_node = Node(
-        package='bt_pkg',
-        executable='bt_executor',
-        name='bt_main',
-        output='screen',
-        parameters=[{
-            'bt_xml_path': LaunchConfiguration('bt_xml_path'),
-            'use_sim_time': LaunchConfiguration('use_sim_time')
-        }]
     )
 
     # Coverage Planner Node (Zigzag Generator)
@@ -108,12 +91,6 @@ def generate_launch_description():
         parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
     )
 
-    # Delay BT Node to wait for Nav2 to be ready
-    delayed_bt_node = TimerAction(
-        period=5.0,
-        actions=[bt_node]
-    )
-
     return LaunchDescription([
         bt_xml_arg,
         use_sim_time_arg,
@@ -122,6 +99,5 @@ def generate_launch_description():
         cone_color_detector_node,
         cone_fusion_node,
         cone_area_node,
-        zigzag_node,
-        delayed_bt_node
+        zigzag_node
     ])

@@ -20,9 +20,18 @@
 // XMLファイルのパスを定数で定義（実際はパラメータやLaunchで渡すと良い）
 // 重要: フルパスで指定するか、shareディレクトリから探すロジックが必要
 
+#include <csignal>
+std::atomic<bool> g_shutdown_requested(false);
+
+void signal_handler(int signum) {
+    (void)signum;
+    g_shutdown_requested = true;
+}
+
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
+    std::signal(SIGINT, signal_handler);
 
     // 1. 共有ROSノードの作成
     auto ros_node = rclcpp::Node::make_shared("bt_executor_node");
@@ -61,15 +70,12 @@ int main(int argc, char **argv)
     try {
         for (const auto & entry : fs::directory_iterator(plugin_dir)) {
             std::string filename = entry.path().filename().string();
-            // "_bt_node.so" で終わるファイル（Nav2のBTノード）を探す
             if (filename.find("_bt_node.so") != std::string::npos) {
-                // Waitノードは自作モックを使うので、Nav2のプラグインは除外する
                 if (filename.find("wait") != std::string::npos) {
                     continue;
                 }
-                // 例: libnav2_wait_action_bt_node.so などが見つかる
                 factory.registerFromPlugin(entry.path().string());
-                // RCLCPP_INFO(ros_node->get_logger(), "Loaded plugin: %s", filename.c_str());
+                RCLCPP_INFO(ros_node->get_logger(), "Loaded plugin: %s", filename.c_str());
             }
         }
     } catch (const std::exception &e) {
@@ -82,52 +88,62 @@ int main(int argc, char **argv)
 
     // 3. Blackboardの設定とROSノードの登録
     auto blackboard = BT::Blackboard::create();
-    blackboard->set("node", ros_node); // これで全ノードがROS機能を使えるようになる
-    blackboard->set<std::chrono::milliseconds>("bt_loop_duration", std::chrono::milliseconds(10)); // Nav2ノード用
-    blackboard->set<std::chrono::milliseconds>("server_timeout", std::chrono::milliseconds(1000)); // Nav2ノード用
-    blackboard->set<std::chrono::milliseconds>("wait_for_service_timeout", std::chrono::milliseconds(1000)); // Nav2ノード用
+    blackboard->set("node", ros_node); 
+    blackboard->set<std::chrono::milliseconds>("bt_loop_duration", std::chrono::milliseconds(10));
+    blackboard->set<std::chrono::milliseconds>("server_timeout", std::chrono::milliseconds(10000)); 
+    blackboard->set<std::chrono::milliseconds>("wait_for_service_timeout", std::chrono::milliseconds(10000)); 
 
     // 4. ツリーの構築
-    try {
-        auto tree = factory.createTreeFromFile(bt_xml_path, blackboard);
-
-        // Grootで可視化するためのパブリッシャー
-        // Nav2のbehavior_serverとポート(1666/1667)が競合するため、2666/2667に変更
-        BT::PublisherZMQ publisher_zmq(tree, 25, 2666, 2667);
-
-        RCLCPP_INFO(ros_node->get_logger(), "Behavior Tree Started");
-
-        // 5. 実行ループ (TickとSpinの共存)
-        //BT::NodeStatus status = BT::NodeStatus::RUNNING;
-        // 実行中(RUNNING)である限りループする（成功したら終わる）
-        //while (rclcpp::ok() && status == BT::NodeStatus::RUNNING) {
-        //    status = tree.tickRoot();
-        //    rclcpp::spin_some(ros_node);
-        //    
-            // CPU負荷を下げるためのスリープ（適宜調整）
-        //    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        //}
-        
-        // 5. 実行ループ
-        int tick_count = 0; // カウンタ追加
-        while (rclcpp::ok()) {
-            // 動作確認のため、10回に1回（約1秒ごとに）ログを出す
-            if (tick_count % 10 == 0) {
-                RCLCPP_INFO(ros_node->get_logger(), "--- Ticking Root (%d) ---", tick_count);
-            }
-            
-            tree.tickRoot(); // ツリーの実行
-            
-            rclcpp::spin_some(ros_node);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            tick_count++;
+    BT::Tree tree;
+    bool tree_created = false;
+    int max_retries = 20; // 20 retries * 1s = 20s (plus 5s initial delay = 25s total)
+    
+    for (int i = 0; i < max_retries; ++i) {
+        if (g_shutdown_requested) break;
+        try {
+            tree = factory.createTreeFromFile(bt_xml_path, blackboard);
+            tree_created = true;
+            break;
         }
-
+        catch (const std::exception &ex) {
+            RCLCPP_WARN(ros_node->get_logger(), "Attempt %d/%d: Error creating tree: %s. Retrying in 1s...", i + 1, max_retries, ex.what());
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
     }
-    catch (const std::exception &ex) {
-        RCLCPP_ERROR(ros_node->get_logger(), "Error creating tree: %s", ex.what());
+
+    if (!tree_created) {
+        if (!g_shutdown_requested) {
+            RCLCPP_ERROR(ros_node->get_logger(), "Failed to create tree after %d attempts. Exiting.", max_retries);
+        }
+        return 1;
     }
 
+    // Grootで可視化するためのパブリッシャー
+    RCLCPP_INFO(ros_node->get_logger(), "Initializing Groot Publisher on ports 2666 (Publisher) and 2667 (Server)");
+    BT::PublisherZMQ publisher_zmq(tree, 25, 2666, 2667);
+
+    RCLCPP_INFO(ros_node->get_logger(), "Behavior Tree Started");
+
+    // 5. 実行ループ
+    int tick_count = 0; 
+    while (rclcpp::ok() && !g_shutdown_requested) {
+        if (tick_count % 10 == 0) {
+            RCLCPP_INFO(ros_node->get_logger(), "--- Ticking Root (%d) ---", tick_count);
+        }
+        
+        try {
+            tree.tickRoot();
+        } catch (const std::exception &ex) {
+             RCLCPP_ERROR(ros_node->get_logger(), "Error during tick: %s", ex.what());
+        }
+        
+        rclcpp::spin_some(ros_node);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        tick_count++;
+    }
+
+    RCLCPP_INFO(ros_node->get_logger(), "Shutting down Behavior Tree Executor...");
+    tree.haltTree();
     rclcpp::shutdown();
     return 0;
 }

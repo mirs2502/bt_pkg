@@ -8,37 +8,50 @@
         <Action ID="Spin"> <input_port name="spin_dist"/> </Action>
         <Action ID="NavigateThroughPoses"> <input_port name="goals"/> </Action>
         <Action ID="NavigateToPose"> <input_port name="goal"/> </Action>
+        <Action ID="FollowPath"> <input_port name="path"/> <input_port name="controller_id"/> </Action>
     </TreeNodesModel>
 
     <BehaviorTree ID="MainTree">
         <Sequence name="FullMission">
             
-            <KeepRunningUntilFailure>
-                <Inverter>
-                    <Sequence name="SetupSequence">
-                        
-                        <Sequence name="GatherInformation">
-                            <Wait wait_duration="1.0"/>
-                            <Spin spin_dist="6.28"/>
-                            <Wait wait_duration="0.5"/> </Sequence>
+        <Sequence name="SetupSequence">
+            
+            <Sequence name="GatherInformation">
+                <!-- Step 1: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="2.0"/>
+                <!-- Step 2: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="2.0"/>
+                <!-- Step 3: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="2.0"/>
+                <!-- Step 4: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="2.0"/>
+                <!-- Step 5: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="2.0"/>
+                <!-- Step 6: Spin 60 deg -->
+                <Spin spin_dist="1.05"/>
+                <Wait wait_duration="3.0"/> <!-- 最後は長めに -->
+            </Sequence>
 
-                        <RetryUntilSuccessful num_attempts="3">
-                            <Fallback name="ScanFallback">
-                                <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-                                <Sequence>
-                                    <Wait wait_duration="1.0"/>
-                                    <AlwaysFailure/>
-                                </Sequence>
-                            </Fallback>
-                        </RetryUntilSuccessful>
-                        
-                        <GenerateCoveragePath node="{node}" 
-                                              area_polygon="{area_polygon}" 
-                                              coverage_path="{coverage_path}"
-                                              start_pose="{start_pose}"/>
+            <RetryUntilSuccessful num_attempts="3">
+                <Fallback name="ScanFallback">
+                    <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
+                    <Sequence>
+                        <Wait wait_duration="1.0"/>
+                        <AlwaysFailure/>
                     </Sequence>
-                </Inverter>
-            </KeepRunningUntilFailure>
+                </Fallback>
+            </RetryUntilSuccessful>
+            
+            <GenerateCoveragePath node="{node}" 
+                                  area_polygon="{area_polygon}" 
+                                  coverage_path="{coverage_path}"
+                                  start_pose="{start_pose}"/>
+        </Sequence>
 
             <Sequence name="ExecutionSequence">
                 <Fallback name="MoveToStartFallback">
@@ -53,14 +66,14 @@
                 <ControlMotor node="{node}" pwm_value="100"/>
                 
                 <Fallback name="CoverageFallback">
-                    <NavigateThroughPoses goals="{coverage_path}"/>
+                    <FollowPath path="{coverage_path}" controller_id="FollowPath"/>
                     <Sequence name="RecoveryRoutine">
                         <ControlMotor node="{node}" pwm_value="0"/>
                         <Wait wait_duration="2.0"/>
                         <Spin spin_dist="3.14"/>
                         <LocalizeWithCones node="{node}"/>
                         <ControlMotor node="{node}" pwm_value="100"/>
-                        <NavigateThroughPoses goals="{coverage_path}"/>
+                        <FollowPath path="{coverage_path}" controller_id="FollowPath"/>
                     </Sequence>
                 </Fallback>
 
