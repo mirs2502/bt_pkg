@@ -17,24 +17,15 @@
         <Sequence name="SetupSequence">
             
             <Sequence name="GatherInformation">
-                <!-- Step 1: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="2.0"/>
-                <!-- Step 2: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="2.0"/>
-                <!-- Step 3: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="2.0"/>
-                <!-- Step 4: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="2.0"/>
-                <!-- Step 5: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="2.0"/>
-                <!-- Step 6: Spin 60 deg -->
-                <Spin spin_dist="1.05"/>
-                <Wait wait_duration="3.0"/> <!-- 最後は長めに -->
+                <Repeat num_cycles="6">
+                    <Sequence>
+                        <RetryUntilSuccessful num_attempts="3">
+                            <Spin spin_dist="1.05"/>
+                        </RetryUntilSuccessful>
+                        <Wait wait_duration="2.0"/>
+                    </Sequence>
+                </Repeat>
+                <Wait wait_duration="1.0"/> <!-- 最後だけ合計3秒にするための追加Wait -->
             </Sequence>
 
             <RetryUntilSuccessful num_attempts="3">

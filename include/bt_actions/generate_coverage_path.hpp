@@ -42,6 +42,7 @@ public:
                 last_path_ = msg;
             });
 
+        start_time_ = node_->now(); // 開始時刻を記録
         RCLCPP_INFO(node_->get_logger(), "Waiting for path from /coverage_path...");
         return NodeStatus::RUNNING;
     }
@@ -56,16 +57,26 @@ public:
 
             return NodeStatus::SUCCESS;
         }
+
+        // タイムアウトチェック (5秒)
+        auto current_time = node_->now();
+        if ((current_time - start_time_).seconds() > 5.0) {
+            RCLCPP_ERROR(node_->get_logger(), "GenerateCoveragePath: Timeout waiting for path.");
+            return NodeStatus::FAILURE;
+        }
+
         return NodeStatus::RUNNING;
     }
 
     void onHalted() override {
         sub_.reset();
+        last_path_.reset(); // リセット時にデータもクリア
     }
 
 private:
     rclcpp::Node::SharedPtr node_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_;
     nav_msgs::msg::Path::SharedPtr last_path_;
+    rclcpp::Time start_time_; // タイムアウト計測用
 };
 #endif
