@@ -1,76 +1,95 @@
+<?xml version="1.0"?>
 <root main_tree_to_execute="MainTree">
-    <TreeNodesModel>
-        <Action ID="ScanAndCreatePolygon"> <input_port name="node"/> <output_port name="area_polygon"/> </Action>
-        <Action ID="GenerateCoveragePath"> <input_port name="node"/> <input_port name="area_polygon"/> <output_port name="coverage_path"/> <output_port name="start_pose"/> </Action>
-        <Action ID="ControlMotor"> <input_port name="node"/> <input_port name="pwm_value"/> </Action>
-        <Action ID="LocalizeWithCones"> <input_port name="node"/> </Action>
-        <Action ID="Wait"> <input_port name="wait_duration"/> </Action>
-        <Action ID="Spin"> <input_port name="spin_dist"/> </Action>
-        <Action ID="NavigateThroughPoses"> <input_port name="goals"/> </Action>
-        <Action ID="NavigateToPose"> <input_port name="goal"/> </Action>
-        <Action ID="FollowPath"> <input_port name="path"/> <input_port name="controller_id"/> </Action>
-    </TreeNodesModel>
-
+    <!-- ////////// -->
     <BehaviorTree ID="MainTree">
         <Sequence name="FullMission">
-            
-        <Sequence name="SetupSequence">
-            
-            <Sequence name="GatherInformation">
-                <Repeat num_cycles="6">
-                    <Sequence>
-                        <RetryUntilSuccessful num_attempts="3">
-                            <Spin spin_dist="1.05"/>
-                        </RetryUntilSuccessful>
-                        <Wait wait_duration="2.0"/>
-                    </Sequence>
-                </Repeat>
-                <Wait wait_duration="1.0"/> <!-- 最後だけ合計3秒にするための追加Wait -->
+            <Sequence name="SetupSequence">
+                <Sequence name="GatherInformation">
+                    <Repeat num_cycles="6">
+                        <Sequence>
+                            <RetryUntilSuccessful num_attempts="3">
+                                <Action ID="Spin" spin_dist="1.05"/>
+                            </RetryUntilSuccessful>
+                            <Action ID="Wait" wait_duration="2.0"/>
+                        </Sequence>
+                    </Repeat>
+                    <Action ID="Wait" wait_duration="1.0"/>
+                </Sequence>
+                <RetryUntilSuccessful num_attempts="3">
+                    <Fallback name="ScanFallback">
+                        <Action ID="ScanAndCreatePolygon" area_polygon="{area_polygon}" node="{node}"/>
+                        <Sequence>
+                            <Action ID="Wait" wait_duration="1.0"/>
+                            <AlwaysFailure/>
+                        </Sequence>
+                    </Fallback>
+                </RetryUntilSuccessful>
+                <Action ID="GenerateCoveragePath" area_polygon="{area_polygon}" coverage_path="{coverage_path}" node="{node}" start_pose="{start_pose}"/>
             </Sequence>
-
-            <RetryUntilSuccessful num_attempts="3">
-                <Fallback name="ScanFallback">
-                    <ScanAndCreatePolygon node="{node}" area_polygon="{area_polygon}"/>
-                    <Sequence>
-                        <Wait wait_duration="1.0"/>
-                        <AlwaysFailure/>
-                    </Sequence>
-                </Fallback>
-            </RetryUntilSuccessful>
-            
-            <GenerateCoveragePath node="{node}" 
-                                  area_polygon="{area_polygon}" 
-                                  coverage_path="{coverage_path}"
-                                  start_pose="{start_pose}"/>
-        </Sequence>
-
             <Sequence name="ExecutionSequence">
                 <Fallback name="MoveToStartFallback">
-                    <NavigateToPose goal="{start_pose}"/>
+                    <Action ID="NavigateToPose" goal="{start_pose}"/>
                     <Sequence name="RetryStart">
-                        <Wait wait_duration="1.0"/>
-                        <LocalizeWithCones node="{node}"/>
-                        <NavigateToPose goal="{start_pose}"/>
+                        <Action ID="Wait" wait_duration="1.0"/>
+                        <Action ID="LocalizeWithCones" node="{node}"/>
+                        <Action ID="NavigateToPose" goal="{start_pose}"/>
                     </Sequence>
                 </Fallback>
 
-                <ControlMotor node="{node}" pwm_value="100"/>
-                
+                <!-- <Action ID="ControlMotor" node="{node}" pwm_value="100"/> -->
                 <Fallback name="CoverageFallback">
-                    <FollowPath path="{coverage_path}" controller_id="FollowPath"/>
+                    <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
                     <Sequence name="RecoveryRoutine">
-                        <ControlMotor node="{node}" pwm_value="0"/>
-                        <Wait wait_duration="2.0"/>
-                        <Spin spin_dist="3.14"/>
-                        <LocalizeWithCones node="{node}"/>
-                        <ControlMotor node="{node}" pwm_value="100"/>
-                        <FollowPath path="{coverage_path}" controller_id="FollowPath"/>
+                        <!-- <Action ID="ControlMotor" node="{node}" pwm_value="0"/> -->
+                        <Action ID="Wait" wait_duration="2.0"/>
+                        <Action ID="Spin" spin_dist="3.14"/>
+                        <Action ID="LocalizeWithCones" node="{node}"/>
+                        <!-- <Action ID="ControlMotor" node="{node}" pwm_value="100"/> -->
+                        <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
                     </Sequence>
                 </Fallback>
+                <!-- <Action ID="ControlMotor" node="{node}" pwm_value="0"/> -->
 
-                <ControlMotor node="{node}" pwm_value="0"/>
+                <!-- Mission Complete: Wait indefinitely to prevent restart -->
+                <Wait wait_duration="99999.0"/>
             </Sequence>
-
         </Sequence>
     </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="ControlMotor">
+            <input_port name="node"/>
+            <input_port name="pwm_value"/>
+        </Action>
+        <Action ID="FollowPath">
+            <input_port name="controller_id"/>
+            <input_port name="path"/>
+        </Action>
+        <Action ID="GenerateCoveragePath">
+            <input_port name="area_polygon"/>
+            <output_port name="coverage_path"/>
+            <input_port name="node"/>
+            <output_port name="start_pose"/>
+        </Action>
+        <Action ID="LocalizeWithCones">
+            <input_port name="node"/>
+        </Action>
+        <Action ID="NavigateThroughPoses">
+            <input_port name="goals"/>
+        </Action>
+        <Action ID="NavigateToPose">
+            <input_port name="goal"/>
+        </Action>
+        <Action ID="ScanAndCreatePolygon">
+            <output_port name="area_polygon"/>
+            <input_port name="node"/>
+        </Action>
+        <Action ID="Spin">
+            <input_port name="spin_dist"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="wait_duration"/>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
 </root>

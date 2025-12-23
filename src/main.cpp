@@ -8,6 +8,7 @@
 #include "bt_actions/scan_and_create_polygon.hpp"
 #include "bt_actions/generate_coverage_path.hpp"
 #include "bt_actions/localize_with_cones.hpp"
+#include "bt_actions/localize_with_cones.hpp"
 #include "bt_actions/control_motor.hpp" // Added
 #include "bt_actions/drive_robot.hpp" // Added
 //Nav2関連
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
     factory.registerNodeType<ScanAndCreatePolygon>("ScanAndCreatePolygon");
     factory.registerNodeType<GenerateCoveragePath>("GenerateCoveragePath");
     factory.registerNodeType<LocalizeWithCones>("LocalizeWithCones");
+
     factory.registerNodeType<ControlMotor>("ControlMotor"); // Added
     factory.registerNodeType<DriveRobot>("DriveRobot"); // Added
 

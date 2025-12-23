@@ -15,7 +15,6 @@
         <Sequence name="FullMission">
             
         <Sequence name="SetupSequence">
-            
             <Sequence name="GatherInformation">
                 <Repeat num_cycles="6">
                     <Sequence>
@@ -69,6 +68,9 @@
                 </Fallback>
 
                 <ControlMotor node="{node}" pwm_value="0"/>
+                
+                <!-- Mission Complete: Wait indefinitely to prevent restart -->
+                <Wait wait_duration="99999.0"/>
             </Sequence>
 
         </Sequence>
