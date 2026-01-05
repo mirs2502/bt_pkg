@@ -36,19 +36,23 @@
                     </Sequence>
                 </Fallback>
 
-                <!-- <Action ID="ControlMotor" node="{node}" pwm_value="100"/> -->
+                <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
+                <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
                 <Fallback name="CoverageFallback">
                     <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
                     <Sequence name="RecoveryRoutine">
-                        <!-- <Action ID="ControlMotor" node="{node}" pwm_value="0"/> -->
+                        <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
+                        <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
                         <Action ID="Wait" wait_duration="2.0"/>
                         <Action ID="Spin" spin_dist="3.14"/>
                         <Action ID="LocalizeWithCones" node="{node}"/>
-                        <!-- <Action ID="ControlMotor" node="{node}" pwm_value="100"/> -->
+                        <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
+                        <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
                         <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
                     </Sequence>
                 </Fallback>
-                <!-- <Action ID="ControlMotor" node="{node}" pwm_value="0"/> -->
+                <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
+                <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
 
                 <!-- Mission Complete: Wait indefinitely to prevent restart -->
                 <Wait wait_duration="99999.0"/>
@@ -59,6 +63,7 @@
     <TreeNodesModel>
         <Action ID="ControlMotor">
             <input_port name="node"/>
+            <input_port name="motor_id"/>
             <input_port name="pwm_value"/>
         </Action>
         <Action ID="FollowPath">

@@ -16,6 +16,7 @@ public:
     static PortsList providedPorts() {
         return {
             InputPort<rclcpp::Node::SharedPtr>("node"),
+            InputPort<int>("motor_id"),
             InputPort<int>("pwm_value")
         };
     }
@@ -27,6 +28,13 @@ public:
         }
         auto node = node_res.value();
 
+        auto id_res = getInput<int>("motor_id");
+        if (!id_res) {
+            RCLCPP_ERROR(node->get_logger(), "Missing input [motor_id]");
+            return NodeStatus::FAILURE;
+        }
+        int motor_id = id_res.value();
+
         auto pwm_res = getInput<int>("pwm_value");
         if (!pwm_res) {
             RCLCPP_ERROR(node->get_logger(), "Missing input [pwm_value]");
@@ -34,7 +42,7 @@ public:
         }
         int pwm_value = pwm_res.value();
 
-        RCLCPP_INFO(node->get_logger(), "ControlMotor: Calling service with PWM %d", pwm_value);
+        RCLCPP_INFO(node->get_logger(), "ControlMotor: Calling service for Motor %d with PWM %d", motor_id, pwm_value);
 
         auto client = node->create_client<mirs_msgs::srv::BasicCommand>("/motor_ctrl");
 
@@ -44,7 +52,8 @@ public:
         }
 
         auto request = std::make_shared<mirs_msgs::srv::BasicCommand::Request>();
-        request->param1 = (double)pwm_value;
+        request->param1 = (double)motor_id;
+        request->param2 = (double)pwm_value;
 
         auto future = client->async_send_request(request);
 
