@@ -17,6 +17,8 @@
   <depend>nav2_msgs</depend>
   <depend>nav2_behavior_tree</depend>
   <depend>mirs_msgs</depend>
+  <depend>pcl_conversions</depend> <!-- Added -->
+  <depend>sensor_msgs</depend> <!-- Added -->
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

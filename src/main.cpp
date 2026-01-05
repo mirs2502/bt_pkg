@@ -11,6 +11,7 @@
 #include "bt_actions/localize_with_cones.hpp"
 #include "bt_actions/control_motor.hpp" // Added
 #include "bt_actions/drive_robot.hpp" // Added
+#include "bt_actions/check_cone_count.hpp" // Added
 //Nav2関連
 #include <filesystem>
 #include <string>
@@ -59,29 +60,32 @@ int main(int argc, char **argv)
 
     factory.registerNodeType<ControlMotor>("ControlMotor"); // Added
     factory.registerNodeType<DriveRobot>("DriveRobot"); // Added
+    factory.registerNodeType<CheckConeCount>("CheckConeCount"); // Added
 
     // Nav2モックノードの登録 (テスト用)
     factory.registerNodeType<Wait>("Wait");
-    //factory.registerNodeType<Spin>("Spin");
+    factory.registerNodeType<Spin>("Spin");
     //factory.registerNodeType<NavigateThroughPoses>("NavigateThroughPoses");
 
     
     const std::string plugin_dir = "/opt/ros/humble/lib"; // ROS2の標準ライブラリパス
     namespace fs = std::filesystem;
 
-    try {
-        for (const auto & entry : fs::directory_iterator(plugin_dir)) {
+    for (const auto & entry : fs::directory_iterator(plugin_dir)) {
+        try {
             std::string filename = entry.path().filename().string();
             if (filename.find("_bt_node.so") != std::string::npos) {
-                if (filename.find("wait") != std::string::npos) {
+                // Skip plugins that conflict with our mock nodes or are not needed
+                if (filename.find("wait") != std::string::npos || 
+                    filename.find("spin") != std::string::npos) {
                     continue;
                 }
                 factory.registerFromPlugin(entry.path().string());
                 RCLCPP_INFO(ros_node->get_logger(), "Loaded plugin: %s", filename.c_str());
             }
+        } catch (const std::exception &e) {
+            RCLCPP_ERROR(ros_node->get_logger(), "Failed to load plugin %s: %s", entry.path().filename().string().c_str(), e.what());
         }
-    } catch (const std::exception &e) {
-        RCLCPP_ERROR(ros_node->get_logger(), "Failed to load plugins: %s", e.what());
     }
     
 
@@ -121,8 +125,13 @@ int main(int argc, char **argv)
     }
 
     // Grootで可視化するためのパブリッシャー
-    RCLCPP_INFO(ros_node->get_logger(), "Initializing Groot Publisher on ports 2666 (Publisher) and 2667 (Server)");
-    BT::PublisherZMQ publisher_zmq(tree, 25, 2666, 2667);
+    std::unique_ptr<BT::PublisherZMQ> publisher_zmq;
+    try {
+        RCLCPP_INFO(ros_node->get_logger(), "Initializing Groot Publisher on ports 2666 (Publisher) and 2667 (Server)");
+        publisher_zmq = std::make_unique<BT::PublisherZMQ>(tree, 25, 2666, 2667);
+    } catch (const std::exception &e) {
+        RCLCPP_ERROR(ros_node->get_logger(), "Failed to initialize Groot Publisher: %s", e.what());
+    }
 
     RCLCPP_INFO(ros_node->get_logger(), "Behavior Tree Started");
 

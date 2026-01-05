@@ -15,6 +15,8 @@ find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_behavior_tree REQUIRED) 
 find_package(mirs_msgs REQUIRED) 
+find_package(pcl_conversions REQUIRED) # Added
+find_package(sensor_msgs REQUIRED) # Added 
 
 # 自分のパッケージ内のヘッダー置き場を指定
 include_directories(
@@ -38,6 +40,8 @@ ament_target_dependencies(bt_executor
   nav2_msgs
   nav2_behavior_tree
   mirs_msgs
+  pcl_conversions # Added
+  sensor_msgs # Added
 )
 
 # インストール設定（実行ファイル）
