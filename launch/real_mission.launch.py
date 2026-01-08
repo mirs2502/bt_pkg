@@ -63,7 +63,10 @@ def generate_launch_description():
         executable='cone_color_detector_node',
         name='cone_color_detector_node',
         output='screen',
-        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'max_area': 200000  # コーンが近くて大きく映る場合に対応
+        }],
         remappings=[
             ('/image_raw', '/camera/color/image_raw'),
             ('/camera_info', '/camera/color/camera_info'),
@@ -92,7 +95,10 @@ def generate_launch_description():
         executable='cone_area_node',
         name='cone_area_node',
         output='screen',
-        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'threshold_dist': 0.8  # 重複判定の距離閾値 (m)
+        }]
         # No remapping needed for /confirmed_cones as fusion node publishes to it
     )
 
