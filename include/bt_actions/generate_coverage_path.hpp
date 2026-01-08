@@ -53,6 +53,14 @@ public:
             
             if (!last_path_->poses.empty()) {
                 setOutput("start_pose", last_path_->poses[0]);
+                
+                // Debug logs
+                size_t n = last_path_->poses.size();
+                auto start = last_path_->poses[0].pose.position;
+                auto end = last_path_->poses[n-1].pose.position;
+                double dist = std::hypot(end.x - start.x, end.y - start.y);
+                RCLCPP_INFO(node_->get_logger(), "GenerateCoveragePath: Path size: %zu, Start: (%.2f, %.2f), End: (%.2f, %.2f), Dist: %.2f", 
+                            n, start.x, start.y, end.x, end.y, dist);
             }
 
             return NodeStatus::SUCCESS;

@@ -16,7 +16,17 @@ public:
         double duration = 1.0;
         if (getInput("wait_duration", duration)) {
             std::cout << "[Wait Node] Waiting for " << duration << " seconds..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(duration * 1000)));
+            
+            int total_ms = static_cast<int>(duration * 1000);
+            int elapsed = 0;
+            while (elapsed < total_ms && rclcpp::ok()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                elapsed += 100;
+            }
+            
+            if (!rclcpp::ok()) {
+                return NodeStatus::FAILURE;
+            }
             return NodeStatus::SUCCESS;
         } else {
              throw RuntimeError("Missing parameter [wait_duration]");

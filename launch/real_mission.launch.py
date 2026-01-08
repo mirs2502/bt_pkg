@@ -26,6 +26,12 @@ def generate_launch_description():
         description='Use simulated clock if true'
     )
 
+    use_lidar_only_arg = DeclareLaunchArgument(
+        'use_lidar_only',
+        default_value='false',
+        description='If true, skip camera fusion and use lidar only'
+    )
+
     # Cone Detector Pipeline
     
     # 1. Scan to PointCloud
@@ -71,7 +77,10 @@ def generate_launch_description():
         executable='cone_fusion_node',
         name='cone_fusion_node',
         output='screen',
-        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        parameters=[{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'use_lidar_only': LaunchConfiguration('use_lidar_only')
+        }],
         remappings=[
             ('/camera_info', '/camera/color/camera_info')
         ]
@@ -117,6 +126,7 @@ def generate_launch_description():
     return LaunchDescription([
         bt_xml_arg,
         use_sim_time_arg,
+        use_lidar_only_arg,
         scan_to_pcl_node,
         cone_cluster_node,
         cone_color_detector_node,

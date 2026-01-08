@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
     // Nav2モックノードの登録 (テスト用)
     factory.registerNodeType<Wait>("Wait");
-    factory.registerNodeType<Spin>("Spin");
+    // factory.registerNodeType<Spin>("Spin"); // Mock Spin removed to use real Nav2 action
     //factory.registerNodeType<NavigateThroughPoses>("NavigateThroughPoses");
 
     
@@ -76,8 +76,7 @@ int main(int argc, char **argv)
             std::string filename = entry.path().filename().string();
             if (filename.find("_bt_node.so") != std::string::npos) {
                 // Skip plugins that conflict with our mock nodes or are not needed
-                if (filename.find("wait") != std::string::npos || 
-                    filename.find("spin") != std::string::npos) {
+                if (filename.find("wait") != std::string::npos) { // Only skip Wait, allow Spin
                     continue;
                 }
                 factory.registerFromPlugin(entry.path().string());
@@ -155,6 +154,30 @@ int main(int argc, char **argv)
 
     RCLCPP_INFO(ros_node->get_logger(), "Shutting down Behavior Tree Executor...");
     tree.haltTree();
+
+    // Stop motors on shutdown
+    RCLCPP_INFO(ros_node->get_logger(), "Stopping motors...");
+    auto client = ros_node->create_client<mirs_msgs::srv::BasicCommand>("/motor_ctrl");
+    // We can't use wait_for_service here if the node is spinning in another thread or if we are shutting down.
+    // But since we are in main, we can try to call it.
+    // Note: If the service server (ESP32 node) is already down, this will fail/timeout.
+    
+    if (client->service_is_ready()) {
+        auto request = std::make_shared<mirs_msgs::srv::BasicCommand::Request>();
+        request->param1 = 2.0; // Motor ID
+        request->param2 = 0.0; // PWM 0 (Stop)
+        
+        auto future = client->async_send_request(request);
+        // Wait briefly
+        if (future.wait_for(std::chrono::milliseconds(500)) == std::future_status::ready) {
+             RCLCPP_INFO(ros_node->get_logger(), "Motors stopped successfully.");
+        } else {
+             RCLCPP_WARN(ros_node->get_logger(), "Failed to stop motors (timeout).");
+        }
+    } else {
+        RCLCPP_WARN(ros_node->get_logger(), "Motor service not ready, cannot stop motors.");
+    }
+
     rclcpp::shutdown();
     return 0;
 }

@@ -39,7 +39,7 @@
                 <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
                 <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
                 <Fallback name="CoverageFallback">
-                    <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
+                    <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
                     <Sequence name="RecoveryRoutine">
                         <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
                         <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
@@ -48,7 +48,7 @@
                         <Action ID="LocalizeWithCones" node="{node}"/>
                         <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
                         <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
-                        <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
+                        <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
                     </Sequence>
                 </Fallback>
                 <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
