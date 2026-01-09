@@ -142,9 +142,18 @@ int main(int argc, char **argv)
         }
         
         try {
-            tree.tickRoot();
+            BT::NodeStatus status = tree.tickRoot();
+            
+            if (status == BT::NodeStatus::SUCCESS) {
+                RCLCPP_INFO(ros_node->get_logger(), "Mission Completed Successfully!");
+                break; // Exit loop
+            } else if (status == BT::NodeStatus::FAILURE) {
+                RCLCPP_ERROR(ros_node->get_logger(), "Mission Failed!");
+                break; // Exit loop
+            }
         } catch (const std::exception &ex) {
              RCLCPP_ERROR(ros_node->get_logger(), "Error during tick: %s", ex.what());
+             break; // Exit loop on error
         }
         
         rclcpp::spin_some(ros_node);

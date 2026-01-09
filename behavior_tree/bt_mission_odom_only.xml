@@ -8,6 +8,7 @@
         <Action ID="Spin"> <input_port name="spin_dist"/> </Action>
         <Action ID="NavigateThroughPoses"> <input_port name="goals"/> </Action>
         <Action ID="NavigateToPose"> <input_port name="goal"/> </Action>
+        <Action ID="DriveRobot"> <input_port name="node"/> <input_port name="linear_x"/> <input_port name="angular_z"/> <input_port name="duration"/> </Action>
         <Action ID="FollowPath"> <input_port name="path"/> <input_port name="controller_id"/> </Action>
         <Condition ID="CheckConeCount"> <input_port name="target_count"/> </Condition>
     </TreeNodesModel>
@@ -21,7 +22,7 @@
                     <Fallback>
                         <CheckConeCount target_count="4"/>
                         <Sequence>
-                            <Spin spin_dist="1.05"/>
+                            <DriveRobot node="{node}" linear_x="0.0" angular_z="0.5" duration="2.1"/>
                             <Wait wait_duration="1.0"/>
                             <AlwaysFailure/>
                         </Sequence>
@@ -44,6 +45,7 @@
                                   area_polygon="{area_polygon}" 
                                   coverage_path="{coverage_path}"
                                   start_pose="{start_pose}"/>
+            <Wait wait_duration="2.0"/>
         </Sequence>
 
             <Fallback name="MissionFallback">
@@ -66,7 +68,7 @@
                             <ControlMotor node="{node}" motor_id="1" pwm_value="0"/>
                             <ControlMotor node="{node}" motor_id="2" pwm_value="0"/>
                             <Wait wait_duration="2.0"/>
-                            <Spin spin_dist="3.14"/>
+                            <DriveRobot node="{node}" linear_x="0.0" angular_z="0.5" duration="6.3"/>
                             <!-- LocalizeWithCones removed for odom-only mode -->
                             <ControlMotor node="{node}" motor_id="1" pwm_value="200"/>
                             <ControlMotor node="{node}" motor_id="2" pwm_value="200"/>

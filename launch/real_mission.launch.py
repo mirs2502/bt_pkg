@@ -108,13 +108,33 @@ def generate_launch_description():
         }]
     )
 
-    # Coverage Planner Node (Zigzag Generator)
+    use_rectangle_path_arg = DeclareLaunchArgument(
+        'use_rectangle_path',
+        default_value='false',
+        description='If true, use rectangle generator instead of zigzag generator'
+    )
+
+    # ... (existing nodes) ...
+
+    # Coverage Planner Node (Zigzag Generator or Rectangle Generator)
+    from launch.conditions import IfCondition, UnlessCondition
+
     zigzag_node = Node(
         package='coverage_planner',
         executable='zigzag_generator',
         name='zigzag_generator',
         output='screen',
-        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        condition=UnlessCondition(LaunchConfiguration('use_rectangle_path'))
+    )
+
+    rectangle_node = Node(
+        package='coverage_planner',
+        executable='rectangle_generator',
+        name='rectangle_generator',
+        output='screen',
+        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        condition=IfCondition(LaunchConfiguration('use_rectangle_path'))
     )
 
     # Delay BT Node to wait for Nav2 to be ready
@@ -127,11 +147,13 @@ def generate_launch_description():
         bt_xml_arg,
         use_sim_time_arg,
         use_lidar_only_arg,
+        use_rectangle_path_arg,
         scan_to_pcl_node,
         cone_cluster_node,
         cone_color_detector_node,
         cone_fusion_node,
         cone_area_node,
         zigzag_node,
+        rectangle_node,
         delayed_bt_node
     ])
