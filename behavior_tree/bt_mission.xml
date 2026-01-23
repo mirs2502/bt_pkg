@@ -8,7 +8,7 @@
                     <Repeat num_cycles="6">
                         <Sequence>
                             <RetryUntilSuccessful num_attempts="3">
-                                <Action ID="DriveRobot" node="{node}" linear_x="0.0" angular_z="0.5" duration="2.1"/>
+                                <Action ID="DriveRobot" angular_z="0.5" duration="2.1" linear_x="0.0" node="{node}"/>
                             </RetryUntilSuccessful>
                             <Action ID="Wait" wait_duration="2.0"/>
                         </Sequence>
@@ -36,42 +36,39 @@
                         <Action ID="NavigateToPose" goal="{start_pose}"/>
                     </Sequence>
                 </Fallback>
-
-                <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
-                <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
+                <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="190"/>
+                <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="100"/>
                 <Fallback name="CoverageFallback">
                     <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
                     <Sequence name="RecoveryRoutine">
-                        <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
-                        <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
+                        <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="0"/>
+                        <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="0"/>
                         <Action ID="Wait" wait_duration="2.0"/>
-                        <Action ID="DriveRobot" node="{node}" linear_x="0.0" angular_z="0.5" duration="6.3"/>
+                        <Action ID="DriveRobot" angular_z="0.5" duration="6.3" linear_x="0.0" node="{node}"/>
                         <Action ID="LocalizeWithCones" node="{node}"/>
-                        <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
-                        <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
+                        <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="190"/>
+                        <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="100"/>
                         <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
                     </Sequence>
                 </Fallback>
-                <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
-                <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
-
-                <!-- Mission Complete: Wait indefinitely to prevent restart -->
-                <Wait wait_duration="99999.0"/>
+                <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="0"/>
+                <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="0"/>
+                <Action ID="Wait" wait_duration="99999.0"/>
             </Sequence>
         </Sequence>
     </BehaviorTree>
     <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="ControlMotor">
-            <input_port name="node"/>
             <input_port name="motor_id"/>
+            <input_port name="node"/>
             <input_port name="pwm_value"/>
         </Action>
         <Action ID="DriveRobot">
-            <input_port name="node"/>
-            <input_port name="linear_x"/>
             <input_port name="angular_z"/>
             <input_port name="duration"/>
+            <input_port name="linear_x"/>
+            <input_port name="node"/>
         </Action>
         <Action ID="FollowPath">
             <input_port name="controller_id"/>
