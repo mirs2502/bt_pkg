@@ -46,7 +46,7 @@ public:
 
         auto client = node->create_client<mirs_msgs::srv::BasicCommand>("/motor_ctrl");
 
-        if (!client->wait_for_service(std::chrono::seconds(1))) {
+        if (!client->wait_for_service(std::chrono::seconds(5))) {
             RCLCPP_ERROR(node->get_logger(), "Service /motor_ctrl not available");
             return NodeStatus::FAILURE;
         }

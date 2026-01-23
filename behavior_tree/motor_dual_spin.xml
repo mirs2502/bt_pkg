@@ -1,23 +1,25 @@
-<?xml version="1.0"?>
 <root main_tree_to_execute="MotorDualSpinTree">
-    <!-- ////////// -->
-    <BehaviorTree ID="MotorDualSpinTree">
-        <Sequence>
-            <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="190"/>
-            <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="100"/>
-            <Action ID="Wait" wait_duration="9999.0"/>
-        </Sequence>
-    </BehaviorTree>
-    <!-- ////////// -->
     <TreeNodesModel>
         <Action ID="ControlMotor">
-            <input_port name="motor_id"/>
             <input_port name="node"/>
+            <input_port name="motor_id"/>
             <input_port name="pwm_value"/>
         </Action>
         <Action ID="Wait">
             <input_port name="wait_duration"/>
         </Action>
     </TreeNodesModel>
-    <!-- ////////// -->
+
+    <BehaviorTree ID="MotorDualSpinTree">
+        <KeepRunningUntilFailure>
+            <Sequence>
+                <!-- Motor ID 1 -->
+                <ControlMotor node="{node}" motor_id="1" pwm_value="190"/>
+                <!-- Motor ID 2 -->
+                <ControlMotor node="{node}" motor_id="2" pwm_value="100"/>
+                <!-- Wait 0.5s and repeat (Heartbeat) -->
+                <Wait wait_duration="0.5"/>
+            </Sequence>
+        </KeepRunningUntilFailure>
+    </BehaviorTree>
 </root>
