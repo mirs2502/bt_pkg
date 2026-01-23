@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
-<root main_tree_to_execute="MotorSpinTree">
+<root main_tree_to_execute="MotorDualSpinTree">
     <!-- ////////// -->
-    <BehaviorTree ID="MotorSpinTree">
+    <BehaviorTree ID="MotorDualSpinTree">
         <Sequence>
             <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="190"/>
+            <Action ID="ControlMotor" motor_id="2" node="{node}" pwm_value="100"/>
             <Action ID="Wait" wait_duration="9999.0"/>
         </Sequence>
     </BehaviorTree>

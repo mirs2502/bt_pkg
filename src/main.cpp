@@ -136,29 +136,51 @@ int main(int argc, char **argv)
 
     // 5. 実行ループ
     int tick_count = 0; 
+    bool mission_active = true;
+
     while (rclcpp::ok() && !g_shutdown_requested) {
-        if (tick_count % 10 == 0) {
-            RCLCPP_INFO(ros_node->get_logger(), "--- Ticking Root (%d) ---", tick_count);
-        }
-        
-        try {
-            BT::NodeStatus status = tree.tickRoot();
-            
-            if (status == BT::NodeStatus::SUCCESS) {
-                RCLCPP_INFO(ros_node->get_logger(), "Mission Completed Successfully!");
-                break; // Exit loop
-            } else if (status == BT::NodeStatus::FAILURE) {
-                RCLCPP_ERROR(ros_node->get_logger(), "Mission Failed!");
-                break; // Exit loop
+        if (mission_active) {
+            if (tick_count % 10 == 0) {
+                RCLCPP_INFO(ros_node->get_logger(), "--- Ticking Root (%d) ---", tick_count);
             }
-        } catch (const std::exception &ex) {
-             RCLCPP_ERROR(ros_node->get_logger(), "Error during tick: %s", ex.what());
-             break; // Exit loop on error
+            
+            try {
+                BT::NodeStatus status = tree.tickRoot();
+                
+                if (status == BT::NodeStatus::SUCCESS) {
+                    RCLCPP_INFO(ros_node->get_logger(), "Mission Completed Successfully! Stopping Tree execution.");
+                    mission_active = false;
+                } else if (status == BT::NodeStatus::FAILURE) {
+                    RCLCPP_ERROR(ros_node->get_logger(), "Mission Failed! Stopping Tree execution.");
+                    mission_active = false;
+                }
+            } catch (const std::exception &ex) {
+                 RCLCPP_ERROR(ros_node->get_logger(), "Error during tick: %s", ex.what());
+                 mission_active = false;
+            }
+
+            if (!mission_active) {
+                // ミッション終了時の処理（モーター停止など）
+                RCLCPP_INFO(ros_node->get_logger(), "Stopping motors...");
+                auto client = ros_node->create_client<mirs_msgs::srv::BasicCommand>("/motor_ctrl");
+                if (client->service_is_ready()) {
+                    auto request = std::make_shared<mirs_msgs::srv::BasicCommand::Request>();
+                    request->param1 = 2.0; // Motor ID
+                    request->param2 = 0.0; // PWM 0 (Stop)
+                    auto future = client->async_send_request(request);
+                }
+                RCLCPP_INFO(ros_node->get_logger(), "Node is still alive for Groot. Press Ctrl+C to exit.");
+            }
+        } else {
+            // ミッション終了後は、Grootのためにノードを生かしておく（通信処理のみ）
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
         rclcpp::spin_some(ros_node);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        tick_count++;
+        if (mission_active) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            tick_count++;
+        }
     }
 
     RCLCPP_INFO(ros_node->get_logger(), "Shutting down Behavior Tree Executor...");

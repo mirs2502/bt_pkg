@@ -8,9 +8,10 @@
 using namespace BT;
 
 // Waitの代用 (変更なし)
-class Wait : public SyncActionNode {
+// Waitの代用 (AsyncActionNodeに変更)
+class Wait : public AsyncActionNode {
 public:
-    Wait(const std::string& name, const NodeConfiguration& config) : SyncActionNode(name, config) {}
+    Wait(const std::string& name, const NodeConfiguration& config) : AsyncActionNode(name, config) {}
     static PortsList providedPorts() { return { InputPort<double>("wait_duration") }; }
     NodeStatus tick() override {
         double duration = 1.0;
@@ -20,6 +21,10 @@ public:
             int total_ms = static_cast<int>(duration * 1000);
             int elapsed = 0;
             while (elapsed < total_ms && rclcpp::ok()) {
+                if (isHalted()) {
+                    std::cout << "[Wait Node] Halted!" << std::endl;
+                    return NodeStatus::FAILURE;
+                }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 elapsed += 100;
             }
@@ -31,6 +36,11 @@ public:
         } else {
              throw RuntimeError("Missing parameter [wait_duration]");
         }
+    }
+
+    void halt() override {
+        std::cout << "[Wait Node] Halt requested" << std::endl;
+        AsyncActionNode::halt();
     }
 };
 
