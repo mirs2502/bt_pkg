@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="MainTree">
+    <!-- 2つのコーン間を往復するミッション -->
+    <BehaviorTree ID="MainTree">
+        <Sequence name="TwoConeMission">
+            <!-- セットアップ: 2つのコーンを検出 -->
+            <Sequence name="SetupSequence">
+                <Sequence name="GatherCones">
+                    <!-- 2つのコーンが検出されるまで回転 -->
+                    <RetryUntilSuccessful num_attempts="20">
+                        <Fallback>
+                            <CheckConeCount target_count="2"/>
+                            <Sequence>
+                                <!-- 30度回転 -->
+                                <Action ID="DriveRobot" node="{node}" linear_x="0.0" angular_z="0.5" duration="1.0"/>
+                                <Action ID="Wait" wait_duration="0.5"/>
+                                <AlwaysFailure/>
+                            </Sequence>
+                        </Fallback>
+                    </RetryUntilSuccessful>
+                    <Action ID="Wait" wait_duration="2.0"/>
+                </Sequence>
+            </Sequence>
+
+            <!-- 実行: 往復パスをフォロー -->
+            <Fallback name="ExecutionFallback">
+                <Sequence name="ExecutionSequence">
+                    <!-- モーター起動 -->
+                    <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
+                    <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
+
+                    <!-- パスフォロー（無限ループの代わりに3往復） -->
+                    <Fallback name="FollowFallback">
+                        <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
+                        <Sequence name="RecoveryRoutine">
+                            <!-- エラー時のリカバリ -->
+                            <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
+                            <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
+                            <Action ID="Wait" wait_duration="2.0"/>
+                            <Action ID="DriveRobot" node="{node}" linear_x="-0.2" angular_z="0.0" duration="2.0"/>
+                            <Action ID="Wait" wait_duration="1.0"/>
+                            <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="200"/>
+                            <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="200"/>
+                            <Action ID="FollowPath" controller_id="FollowPath" path="{coverage_path}"/>
+                        </Sequence>
+                    </Fallback>
+
+                    <!-- モーター停止 -->
+                    <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
+                    <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
+
+                    <!-- ミッション完了: 無限待機 -->
+                    <Wait wait_duration="99999.0"/>
+                </Sequence>
+                <Sequence name="FailureHandler">
+                    <Wait wait_duration="99999.0"/>
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="ControlMotor">
+            <input_port name="node"/>
+            <input_port name="motor_id"/>
+            <input_port name="pwm_value"/>
+        </Action>
+        <Action ID="DriveRobot">
+            <input_port name="node"/>
+            <input_port name="linear_x"/>
+            <input_port name="angular_z"/>
+            <input_port name="duration"/>
+        </Action>
+        <Action ID="FollowPath">
+            <input_port name="controller_id"/>
+            <input_port name="path"/>
+        </Action>
+        <Action ID="Wait">
+            <input_port name="wait_duration"/>
+        </Action>
+        <Condition ID="CheckConeCount">
+            <input_port name="target_count"/>
+        </Condition>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
