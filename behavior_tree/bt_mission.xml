@@ -42,7 +42,7 @@
 
                     <Fallback name="CoverageFallback">
                         <!-- 通常の経路追従（散水継続） -->
-                        <Parallel success_threshold="1" failure_threshold="1">
+                        <Parallel success_threshold="2" failure_threshold="2">
                             <!-- 散水継続ループ（ハートビート） -->
                             <KeepRunningUntilFailure>
                                 <Sequence>
@@ -62,7 +62,7 @@
                             <Action ID="LocalizeWithCones" node="{node}"/>
 
                             <!-- Recovery後、再び散水ありの経路追従 -->
-                            <Parallel success_threshold="1" failure_threshold="1">
+                            <Parallel success_threshold="2" failure_threshold="2">
                                 <KeepRunningUntilFailure>
                                     <Sequence>
                                         <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="190"/>

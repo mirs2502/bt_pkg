@@ -40,7 +40,7 @@
                     </Fallback>
                     <Fallback name="CoverageFallback">
                         <!-- 通常の経路追従（散水継続） -->
-                        <Parallel success_threshold="1" failure_threshold="1">
+                        <Parallel success_threshold="2" failure_threshold="2">
                             <!-- 散水継続ループ（ハートビート） -->
                             <KeepRunningUntilFailure>
                                 <Sequence>
@@ -59,7 +59,7 @@
                             <Action ID="DriveRobot" angular_z="0.5" duration="6.3" linear_x="0.0" node="{node}"/>
 
                             <!-- Recovery後、再び散水ありの経路追従 -->
-                            <Parallel success_threshold="1" failure_threshold="1">
+                            <Parallel success_threshold="2" failure_threshold="2">
                                 <KeepRunningUntilFailure>
                                     <Sequence>
                                         <Action ID="ControlMotor" motor_id="1" node="{node}" pwm_value="190"/>
