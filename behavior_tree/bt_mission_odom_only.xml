@@ -40,7 +40,7 @@
                     </Fallback>
                     <Fallback name="CoverageFallback">
                         <!-- 通常の経路追従（散水継続） -->
-                        <Parallel success_threshold="2" failure_threshold="2">
+                        <Parallel success_threshold="1" failure_threshold="1">
                             <!-- 散水継続ループ（ハートビート） -->
                             <KeepRunningUntilFailure>
                                 <Sequence>
