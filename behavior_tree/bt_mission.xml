@@ -40,21 +40,42 @@
                         </Sequence>
                     </Fallback>
 
-                    <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="190"/>
-                    <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="100"/>
                     <Fallback name="CoverageFallback">
-                        <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
+                        <!-- 通常の経路追従（散水継続） -->
+                        <Parallel success_threshold="1" failure_threshold="1">
+                            <!-- 散水継続ループ（ハートビート） -->
+                            <KeepRunningUntilFailure>
+                                <Sequence>
+                                    <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="190"/>
+                                    <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="100"/>
+                                    <Action ID="Wait" wait_duration="0.5"/>
+                                </Sequence>
+                            </KeepRunningUntilFailure>
+                            <!-- 経路追従 -->
+                            <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
+                        </Parallel>
+
+                        <!-- Recovery（散水なし） -->
                         <Sequence name="RecoveryRoutine">
-                            <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
-                            <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
                             <Action ID="Wait" wait_duration="2.0"/>
                             <Action ID="DriveRobot" node="{node}" linear_x="0.0" angular_z="0.5" duration="6.3"/>
                             <Action ID="LocalizeWithCones" node="{node}"/>
-                            <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="190"/>
-                            <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="100"/>
-                            <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
+
+                            <!-- Recovery後、再び散水ありの経路追従 -->
+                            <Parallel success_threshold="1" failure_threshold="1">
+                                <KeepRunningUntilFailure>
+                                    <Sequence>
+                                        <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="190"/>
+                                        <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="100"/>
+                                        <Action ID="Wait" wait_duration="0.5"/>
+                                    </Sequence>
+                                </KeepRunningUntilFailure>
+                                <Action ID="FollowPath" controller_id="CoverageController" path="{coverage_path}"/>
+                            </Parallel>
                         </Sequence>
                     </Fallback>
+
+                    <!-- ミッション完了時に散水停止 -->
                     <Action ID="ControlMotor" node="{node}" motor_id="1" pwm_value="0"/>
                     <Action ID="ControlMotor" node="{node}" motor_id="2" pwm_value="0"/>
 
